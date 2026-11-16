@@ -104,11 +104,11 @@ Windows packaging or configuration experiments.
 
 ## Git handoff
 
-The intended remote is https://github.com/fkachinski5/phoneHMI.git.
-At this handoff, the starter implementation was committed locally as `87e5ae5`,
-but pushing was rejected with HTTP 403 because the authenticated account lacked
-write permission. Do not assume this commit or this document is on GitHub:
-check current Git status and remote history.
+The intended remote is https://github.com/fkachinski/phoneHMI.git.
+An earlier destination under a different account rejected pushes; the user
+subsequently created this repository under the account available to Git.
+Check current Git status and remote history rather than assuming all local
+commits have been published.
 
 Use the normal GitHub authorization flow or an explicitly granted repository
 permission to resolve access. Never request tokens/passwords in chat, reuse
