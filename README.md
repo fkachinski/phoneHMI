@@ -105,6 +105,9 @@ physical iPhone pass criterion has been verified; rerun them on the new laptop.
 
 ## Moving to another laptop / Copilot handoff
 
+AI assistants should read [AGENTS.md](AGENTS.md) for project context, boundaries,
+current evidence, and the ordered next steps.
+
 Clone this repository on the personal laptop, open it in VS Code, and start
 with proof 1. No previous chat or files are required. Tell the next session:
 
