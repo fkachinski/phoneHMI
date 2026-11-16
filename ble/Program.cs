@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Diagnostics;
 using System.Text;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
@@ -103,21 +104,9 @@ static async Task<int> RunAsync(int? seconds)
         characteristic.SubscribedClientsChanged += (sender, _) =>
             Console.WriteLine($"Subscribers: {sender.SubscribedClients.Count}");
 
-        var startup = new TaskCompletionSource<GattServiceProviderAdvertisementStatus>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        provider.AdvertisementStatusChanged += (_, eventArgs) =>
+        provider.AdvertisementStatusChanged += (sender, eventArgs) =>
         {
-            Console.WriteLine($"Advertisement: {eventArgs.Status}; error: {eventArgs.Error}");
-            if (eventArgs.Status is GattServiceProviderAdvertisementStatus.Started
-                or GattServiceProviderAdvertisementStatus.StartedWithoutAllAdvertisementData
-                or GattServiceProviderAdvertisementStatus.Aborted
-                or GattServiceProviderAdvertisementStatus.Stopped)
-                startup.TrySetResult(eventArgs.Status);
-            if (eventArgs.Status == GattServiceProviderAdvertisementStatus.Aborted)
-            {
-                Interlocked.Exchange(ref failed, 1);
-                stop.Cancel();
-            }
+            Console.WriteLine($"Advertisement event: {eventArgs.Status}; error: {eventArgs.Error}; current: {sender.AdvertisementStatus}");
         };
 
         Console.WriteLine("SIMULATED, public, unencrypted, read/notify only. Ctrl+C to stop.");
@@ -130,13 +119,18 @@ static async Task<int> RunAsync(int? seconds)
                 IsConnectable = true,
                 IsDiscoverable = true
             });
-            var status = await startup.Task.WaitAsync(TimeSpan.FromSeconds(10), stop.Token);
-            if (status is not (GattServiceProviderAdvertisementStatus.Started
+            // Event callbacks can arrive after the provider has already changed state.
+            var startup = Stopwatch.StartNew();
+            var status = provider.AdvertisementStatus;
+            while (status is not (GattServiceProviderAdvertisementStatus.Started
                 or GattServiceProviderAdvertisementStatus.StartedWithoutAllAdvertisementData))
             {
-                Console.Error.WriteLine($"Connectable advertising failed: {status}");
-                return 1;
+                if (startup.Elapsed >= TimeSpan.FromSeconds(10))
+                    throw new TimeoutException();
+                await Task.Delay(TimeSpan.FromMilliseconds(100), stop.Token);
+                status = provider.AdvertisementStatus;
             }
+            Console.WriteLine($"Advertising confirmed: {status}. A phone connection is still unproven.");
             if (status == GattServiceProviderAdvertisementStatus.StartedWithoutAllAdvertisementData)
                 Console.WriteLine("Some advertising data omitted. Scan without a UUID filter.");
             if (seconds.HasValue)
@@ -144,6 +138,13 @@ static async Task<int> RunAsync(int? seconds)
             while (true)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1), stop.Token);
+                status = provider.AdvertisementStatus;
+                if (status is not (GattServiceProviderAdvertisementStatus.Started
+                    or GattServiceProviderAdvertisementStatus.StartedWithoutAllAdvertisementData))
+                {
+                    Console.Error.WriteLine($"Advertising is no longer active: {status}");
+                    return 1;
+                }
                 Interlocked.Increment(ref counter);
                 if (characteristic.SubscribedClients.Count > 0)
                 {

@@ -56,7 +56,7 @@ dotnet run --project ble/Counter.csproj
 ```
 
 The first build restores Windows SDK reference packages from NuGet. Wait for
-`Advertisement: Started` (or `StartedWithoutAllAdvertisementData`). Merely
+`Advertising confirmed: Started` (or `StartedWithoutAllAdvertisementData`). Merely
 building or seeing "peripheral support" is not a successful BLE proof.
 
 On the iPhone:
@@ -87,6 +87,13 @@ resource availability still matter. If startup aborts, record the exact output
 and stop rather than repeatedly changing system settings. This starter does
 not install a package, certificate, service, driver, or firewall rule.
 
+Advertisement event lines include both the event and the current provider state.
+Windows can deliver an old `Aborted` event after the provider is already `Started`.
+The publisher allows up to ten seconds for the current state to become started,
+then checks it once per second while running. Startup timeout or a subsequent
+aborted/stopped state exits nonzero. Event lines alone are not evidence of a
+working phone connection.
+
 ## Local checks
 
 ```text
@@ -100,8 +107,8 @@ Initial validation (2026-11-16): six Python tests passed and the .NET build
 completed without warnings. A local browser showed an advancing counter,
 STALE for a frozen response, DISCONNECTED for an invalid response or stopped
 server, and recovery after valid responses resumed. The Windows BLE startup
-test reported `Aborted` with error `Success` and exited nonzero. Neither
-physical iPhone pass criterion has been verified; rerun them on the new laptop.
+test reported `Aborted` with error `Success` and exited nonzero. Those initial
+checks did not verify physical-device connectivity; see the later results below.
 
 Physical-device results (2026-11-16, personal Windows 11 Home laptop, Python
 3.10.11, trusted home Wi-Fi, no VPN):
@@ -110,8 +117,21 @@ Physical-device results (2026-11-16, personal Windows 11 Home laptop, Python
   `python wifi/server.py --host <laptop IPv4>`. Observed CONNECTED with the
   counter advancing past 175, DISCONNECTED after the server stopped, and STALE
   at 5 with `--freeze-after 5`. No firewall or network settings were changed.
-- **Bluetooth proof: pending.** The laptop's Bluetooth adapter reported an
-  error state and the .NET 10 SDK was not detected.
+- **Bluetooth proof: PASSED on iPhone 15 using nRF Connect.** The user confirmed
+  connection, counter reads, automatic notification updates, and successful
+  disconnection/reconnection with updates working again. Notifications were
+  reported working across the walkthrough; no separately timed 30-second
+  observation was recorded. Bluetooth on the iPad and Android remain untested.
+
+Bluetooth follow-up (2026-11-16): .NET SDK 10.0.404 installed; after restarting
+Windows, the adapter reported healthy and peripheral-role support. A bounded
+diagnostic observed an `Aborted` event while the current provider state was
+already `Started`, followed by ten seconds in `Started`. The publisher now
+checks current state rather than treating delayed events as authoritative.
+The updated publisher built without warnings or errors and completed
+`dotnet run --project ble/Counter.csproj -- --seconds 12` with confirmed
+advertising, an advancing local counter, and exit code 0.
+The subsequent physical iPhone test is recorded above.
 
 ## Moving to another laptop / Copilot handoff
 
