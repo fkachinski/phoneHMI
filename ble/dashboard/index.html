@@ -100,6 +100,15 @@
     let lastReceived = 0;
     let active = false;
     let generation = 0;
+    let connectionTimer = null;
+
+    function connectionStage(message) {
+      detail.textContent = message;
+      clearTimeout(connectionTimer);
+      connectionTimer = setTimeout(() => {
+        endSession(`${message} Timed out after 12 seconds. Disconnect other BLE apps, then retry.`);
+      }, 12000);
+    }
 
     function renderInstruments(sample) {
       const phase = sample % 120 * Math.PI / 60;
@@ -115,6 +124,7 @@
     }
 
     function endSession(message) {
+      clearTimeout(connectionTimer);
       generation++;
       active = false;
       if (characteristic) characteristic.removeEventListener("characteristicvaluechanged", receive);
@@ -179,22 +189,34 @@
         });
         if (attempt !== generation) return;
         device = selected;
+        const selectedDevice = selected;
+        disconnect.disabled = false;
         device.addEventListener("gattserverdisconnected", disconnected);
+        connectionStage("Connecting to the selected Bluetooth device.");
         const server = await device.gatt.connect();
-        if (attempt !== generation) return;
+        if (attempt !== generation) {
+          if (selectedDevice.gatt.connected) selectedDevice.gatt.disconnect();
+          return;
+        }
+        connectionStage("Finding the simulated counter service.");
         const service = await server.getPrimaryService(serviceId);
         if (attempt !== generation) return;
+        connectionStage("Finding the counter characteristic.");
         characteristic = await service.getCharacteristic(characteristicId);
         if (attempt !== generation) return;
         characteristic.addEventListener("characteristicvaluechanged", receive);
+        connectionStage("Enabling Bluetooth counter notifications.");
         await characteristic.startNotifications();
         if (attempt !== generation) return;
         active = true;
         disconnect.disabled = false;
-        detail.textContent = "Subscribed. Waiting for the first value.";
+        connectionStage("Subscribed. Reading the first counter value.");
         const source = characteristic;
         const value = await source.readValue();
-        if (attempt === generation) receive({target: {value}});
+        if (attempt === generation) {
+          clearTimeout(connectionTimer);
+          receive({target: {value}});
+        }
       } catch (error) {
         if (attempt === generation) {
           endSession(`Connection failed: ${error.message}. Tap Connect to retry.`);
