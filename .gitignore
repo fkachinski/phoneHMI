@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+bin/
+obj/
+.vs/
+.venv/
+*.pfx
+*.p12
+*.key
+*.cer
+.env

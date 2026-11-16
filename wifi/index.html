@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>phoneHMI counter</title>
+  <style>
+    body { font: 1.2rem system-ui, sans-serif; margin: 2rem auto; padding: 0 1rem; max-width: 32rem; background: #101923; color: #eef4fa; }
+    #counter { font-size: 4rem; overflow-wrap: anywhere; }
+    #status { font-weight: bold; }
+    .notice { color: #ffd479; }
+  </style>
+</head>
+<body>
+  <h1>Phone counter</h1>
+  <p class="notice">SIMULATED - no machine connection</p>
+  <p id="status" role="status">CONNECTING</p>
+  <div id="counter" aria-label="Last received counter">--</div>
+  <p id="detail">Waiting for the local server.</p>
+  <script>
+    let previous = null;
+    let lastAdvance = 0;
+    const status = document.getElementById("status");
+    const counter = document.getElementById("counter");
+    const detail = document.getElementById("detail");
+
+    async function poll() {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2000);
+      try {
+        const response = await fetch("/api/counter", {cache: "no-store", signal: controller.signal});
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (data.version !== 1 || data.simulated !== true ||
+            !Number.isSafeInteger(data.counter) || data.counter < 0) {
+          throw new Error("Invalid counter response");
+        }
+        const now = performance.now();
+        if (previous === null || data.counter !== previous) lastAdvance = now;
+        previous = data.counter;
+        counter.textContent = String(data.counter);
+        const stale = now - lastAdvance >= 3000;
+        status.textContent = stale ? "STALE" : "CONNECTED";
+        detail.textContent = stale ? "Counter stopped advancing; value is not live." : "Counter advancing from the local simulator.";
+      } catch (error) {
+        status.textContent = "DISCONNECTED";
+        detail.textContent = `Last value is not live. ${error.message}. Retrying...`;
+        previous = null;
+      } finally {
+        clearTimeout(timeout);
+        setTimeout(poll, 500);
+      }
+    }
+    poll();
+  </script>
+</body>
+</html>
