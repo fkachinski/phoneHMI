@@ -96,7 +96,7 @@ working phone connection.
 
 ## Local checks
 
-### Next experiment: BLE dashboard (not yet phone-verified)
+### BLE dashboard: iPhone updates and reconnect verified
 
 The machine target has no Wi-Fi; future HMI experiments use BLE. The Wi-Fi
 proof is retained as historical evidence, not as the intended machine transport.
@@ -113,8 +113,9 @@ Phone prerequisites:
 - iPhone/iPad: a Web Bluetooth browser such as
   [Bluefy](https://apps.apple.com/us/app/id1492822055); Safari is unsupported.
 - Android: a browser supporting Web Bluetooth, such as Chrome.
-- The page must be delivered over HTTPS. No public page URL or hosting is
-  configured by this experiment. Do not enter the laptop's HTTP URL into Bluefy.
+- The page must be delivered over HTTPS. The experimental dashboard is hosted
+  at https://fkachinski.github.io/phoneHMI/ble/dashboard/ using GitHub Pages
+  (deploy from `main`, repository root). Do not use the laptop's HTTP URL.
   Initial page delivery requires phone network access; counter data then travels
   locally over BLE, not Wi-Fi or the Internet. Offline startup is not implemented.
 
@@ -127,8 +128,16 @@ Keep the page foregrounded; background operation is not claimed.
 Local browser validation (2026-11-16) used a mocked BLE device to exercise
 reads, notifications, the three-second stale threshold, recovery, invalid
 responses, link loss, manual disconnection, reconnection, chooser errors, and
-unsupported-browser messaging. These checks passed; no physical phone has yet
-used this dashboard, and HTTPS delivery remains to be configured.
+unsupported-browser messaging. These checks passed.
+
+Physical dashboard validation (2026-11-16): the user opened the GitHub Pages
+dashboard in Bluefy on an iPhone 15 and confirmed an advancing counter,
+automatic updates, and successful disconnect/reconnect with updates resuming.
+The publisher was started with
+`dotnet run --no-build --project ble/Counter.csproj -- --seconds 900`.
+Telemetry used BLE; HTTPS was used only to deliver the page. Android, offline
+startup, and physical dashboard stale/link-loss behavior remain unverified.
+The earlier nRF Connect test was a separate transport test, not a dashboard test.
 
 Local UI inspection only (not a phone BLE test):
 
@@ -145,6 +154,9 @@ microcontroller/Arduino-style boards. No documented ready-to-run Windows or
 Qt/Linux BLE publisher was established in this investigation. This is not a
 claim that a port is impossible. A port, extra hardware, or native phone app
 would be a separate implementation choice. No device integration is included.
+The next step is a bounded RemoteXY compatibility evaluation for a laptop-only
+BLE dashboard; do not assume the existing publisher implements its protocol,
+or that it can be deployed to the eventual Qt/Linux target unchanged.
 
 ### Existing simulator tests and publisher build
 
@@ -190,14 +202,15 @@ The subsequent physical iPhone test is recorded above.
 AI assistants should read [AGENTS.md](AGENTS.md) for project context, boundaries,
 current evidence, and the ordered next steps.
 
-Clone this repository on the personal laptop, open it in VS Code, and start
-with proof 1. No previous chat or files are required. Tell the next session:
+Clone this repository, open it in VS Code, and read the observed results above.
+No previous chat or files are required. Tell the next session:
 
-> Read README.md. Help me run the Wi-Fi counter on this laptop and verify it
-> in Safari on my iPhone. Then, if this is Windows, try the independent BLE
-> counter. Do not add machine integration, frameworks, packaging, certificates,
-> or change managed network/security settings. Record observed outcomes, not
-> just successful builds.
+> Read README.md and AGENTS.md. Wi-Fi is historical; the intended transport is
+> BLE. iPhone counter reads/notifications and Bluefy dashboard updates/reconnect
+> have been observed. Evaluate RemoteXY for a laptop-only simulated BLE HMI
+> before choosing an implementation. Keep Android, offline startup, and
+> unobserved acceptance checks pending. Do not add machine integration or
+> change security settings. Record observed outcomes, not just successful builds.
 
 Record the OS, test date, exact commands, errors, and which pass criteria were
 observed. Redact network identifiers before sharing logs. Do not commit machine
