@@ -3,31 +3,34 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>phoneHMI BLE dashboard</title>
+  <title>RexLink | BLE instrument demo</title>
   <style>
     :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #080e17; color: #edf4ff; }
     * { box-sizing: border-box; }
     body { margin: 0 auto; padding: 24px 18px 32px; max-width: 800px; background: radial-gradient(ellipse at 50% 20%, #17273a, #080e17 70%); min-height: 100vh; }
     header { display:flex; justify-content:space-between; align-items:center; gap:12px; border-bottom:1px solid #293647; padding-bottom:18px; }
     .brand { font-size:24px; font-weight:800; letter-spacing:-1px; }
-    .brand span { color:#43e0d0; }
+    .brand span { color:#ed2538; }
+    .logo-panel { display:flex; align-items:center; justify-content:space-between; gap:16px; background:#fff; border-top:4px solid #e2231a; border-radius:10px; padding:14px 18px; margin-bottom:18px; color:#003b64; }
+    .logo-panel img { width:150px; height:61px; object-fit:contain; }
+    .logo-panel p { margin:0; font-size:10px; line-height:1.6; text-align:right; letter-spacing:1px; }
     .eyebrow { color:#91a6be; font-size:10px; letter-spacing:2px; text-transform:uppercase; }
     h1 { margin:5px 0; font-size:23px; letter-spacing:-.7px; }
     .notice { font-size:10px; color:#ffc66c; border:1px solid #68502c; border-radius:6px; padding:7px; white-space:nowrap; letter-spacing:1px; }
     .toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:18px 0; }
     #status { font-size:10px; letter-spacing:1px; color:#ffc66c; }
-    body[data-live="true"] #status { color:#43e0d0; }
+    body[data-live="true"] #status { color:#80c8ff; }
     button { font:600 12px system-ui; padding:10px 12px; border:1px solid #33475d; border-radius:7px; background:#1b2c40; color:#edf4ff; cursor:pointer; }
-    #connect { color:#081b1a; background:#43e0d0; border-color:#43e0d0; }
+    #connect { color:#fff; background:#005691; border-color:#398ac3; }
     button:disabled { opacity:.4; cursor:default; }
     button:focus-visible { outline:3px solid #fff; outline-offset:3px; }
     .card { border:1px solid #2a3a4d; border-radius:18px; background:linear-gradient(145deg,#172434,#0d1622); box-shadow:0 12px 40px #0004; padding:20px; }
     .cardhead { display:flex; justify-content:space-between; align-items:center; }
-    .tag { color:#43e0d0; background:#43e0d010; padding:5px 8px; border-radius:5px; font-size:10px; }
+    .tag { color:#80c8ff; background:#00569140; padding:5px 8px; border-radius:5px; font-size:10px; }
     .dial { position:relative; max-width:430px; margin:0 auto; }
     svg { display:block; width:100%; overflow:visible; }
     .track { fill:none; stroke:#25364a; stroke-width:16; stroke-linecap:round; }
-    .arc { fill:none; stroke:#43e0d0; stroke-width:16; stroke-linecap:round; stroke-dasharray:0 100; transition:stroke-dasharray .7s ease; filter:drop-shadow(0 0 5px #43e0d04d); }
+    .arc { fill:none; stroke:#58b5ff; stroke-width:16; stroke-linecap:round; stroke-dasharray:0 100; transition:stroke-dasharray .7s ease; filter:drop-shadow(0 0 5px #00569180); }
     .dialvalue { position:absolute; top:48%; left:0; right:0; text-align:center; }
     #rpm { font-size:clamp(48px,12vw,76px); line-height:1; font-weight:700; letter-spacing:-4px; font-variant-numeric:tabular-nums; }
     .unit { font-size:11px; letter-spacing:3px; color:#91a6be; margin-top:8px; }
@@ -37,7 +40,7 @@
     .reading small { font-size:13px; font-weight:400; color:#91a6be; letter-spacing:0; }
     .bar { background:#25364a; border-radius:4px; height:5px; overflow:hidden; }
     .bar i { display:block; width:0; height:100%; background:#63abff; transition:width .7s ease; }
-    #pressurebar { background:#ffc66c; }
+    #pressurebar { background:#ed2538; }
     .range { display:flex; justify-content:space-between; color:#91a6be; font-size:10px; margin-top:9px; }
     .foot { display:flex; justify-content:space-between; gap:12px; margin-top:18px; color:#91a6be; font-size:11px; }
     #detail { color:#a3b5ca; font-size:12px; line-height:1.6; min-height:38px; }
@@ -48,8 +51,12 @@
   </style>
 </head>
 <body>
+  <div class="logo-panel">
+    <img src="./rexroth-logo.gif" alt="Bosch Rexroth" width="300" height="122">
+    <p>MOBILE HMI<br>CONCEPT DEMONSTRATOR</p>
+  </div>
   <header>
-    <div><div class="brand">FIELD<span>LINK</span></div><div class="eyebrow">Mobile instrumentation / BLE</div></div>
+    <div><div class="brand">Rex<span>Link</span></div><div class="eyebrow">Mobile instrumentation / BLE</div></div>
     <div class="notice">SIMULATED / READ ONLY</div>
   </header>
   <div class="toolbar">
@@ -63,7 +70,7 @@
         <svg viewBox="0 0 340 275" aria-hidden="true">
           <path class="track" d="M 57 228 A 140 140 0 1 1 283 228"/>
           <path id="rpmarc" class="arc" pathLength="100" d="M 57 228 A 140 140 0 1 1 283 228"/>
-          <path fill="none" stroke="#ffc66c" stroke-width="4" d="M 308 110 A 140 140 0 0 1 283 228"/>
+          <path fill="none" stroke="#ed2538" stroke-width="4" d="M 308 110 A 140 140 0 0 1 283 228"/>
           <text x="44" y="255">0</text><text x="54" y="112">750</text><text x="154" y="40">1500</text>
           <text x="253" y="112">2250</text><text x="269" y="255">3000</text>
         </svg>

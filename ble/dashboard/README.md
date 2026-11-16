@@ -1,5 +1,14 @@
 # Bluefy connection diagnostics
 
+The dashboard's provisional name is RexLink. Its red/blue styling is a concept,
+not a claim of an approved corporate interface. The actual logo image is served
+locally as `rexroth-logo.gif`, downloaded unchanged on 2026-11-16 from the
+Bosch Rexroth website's own asset:
+https://dc-mkt-prod.cloud.bosch.tech/xrm/media/tech/img/rexroth_logo_animated_300.gif
+The source was referenced by https://www.boschrexroth.com/en/us/ .
+It is a 300 x 122 GIF, not HTML text or a recreated logo. No runtime request to
+the corporate website is needed to display it.
+
 After selecting a device, the page displays the current GATT connection step:
 connection, service discovery, characteristic discovery, notification setup,
 or initial read. Each step times out after 12 seconds and enables retry.
