@@ -103,6 +103,16 @@ server, and recovery after valid responses resumed. The Windows BLE startup
 test reported `Aborted` with error `Success` and exited nonzero. Neither
 physical iPhone pass criterion has been verified; rerun them on the new laptop.
 
+Physical-device results (2026-11-16, personal Windows 11 Home laptop, Python
+3.10.11, trusted home Wi-Fi, no VPN):
+
+- **Wi-Fi proof: PASSED** on an iPad (7th gen, iPadOS 15.4.1, Safari) using
+  `python wifi/server.py --host <laptop IPv4>`. Observed CONNECTED with the
+  counter advancing past 175, DISCONNECTED after the server stopped, and STALE
+  at 5 with `--freeze-after 5`. No firewall or network settings were changed.
+- **Bluetooth proof: pending.** The laptop's Bluetooth adapter reported an
+  error state and the .NET 10 SDK was not detected.
+
 ## Moving to another laptop / Copilot handoff
 
 AI assistants should read [AGENTS.md](AGENTS.md) for project context, boundaries,
