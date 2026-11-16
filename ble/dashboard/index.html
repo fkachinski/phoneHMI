@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>phoneHMI BLE dashboard</title>
+  <style>
+    body { font: 1.2rem system-ui, sans-serif; margin: 2rem auto; padding: 0 1rem; max-width: 32rem; background: #101923; color: #eef4fa; }
+    #counter { font-size: 4rem; overflow-wrap: anywhere; }
+    #status { font-weight: bold; }
+    .notice { color: #ffd479; }
+    button { font: inherit; padding: .8rem; margin: .3rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Bluetooth dashboard</h1>
+  <p class="notice">SIMULATED - no machine connection</p>
+  <p>Read-only values over BLE. No machine commands.</p>
+  <button id="connect">Connect to counter</button>
+  <button id="disconnect" disabled>Disconnect</button>
+  <p id="status" role="status">DISCONNECTED</p>
+  <div id="counter" aria-label="Last received counter">--</div>
+  <p id="detail">Connect to the laptop running the BLE counter.</p>
+  <script>
+    const serviceId = "7f4a0001-6f9c-47ac-9f65-1c4db9870021";
+    const characteristicId = "7f4a0002-6f9c-47ac-9f65-1c4db9870021";
+    const connect = document.getElementById("connect");
+    const disconnect = document.getElementById("disconnect");
+    const status = document.getElementById("status");
+    const counter = document.getElementById("counter");
+    const detail = document.getElementById("detail");
+    let device = null;
+    let characteristic = null;
+    let previous = null;
+    let lastAdvance = 0;
+    let lastReceived = 0;
+    let active = false;
+    let generation = 0;
+
+    function endSession(message) {
+      generation++;
+      active = false;
+      if (characteristic) characteristic.removeEventListener("characteristicvaluechanged", receive);
+      characteristic = null;
+      if (device) {
+        device.removeEventListener("gattserverdisconnected", disconnected);
+        if (device.gatt.connected) device.gatt.disconnect();
+      }
+      device = null;
+      connect.disabled = false;
+      disconnect.disabled = true;
+      previous = null;
+      status.textContent = "DISCONNECTED";
+      detail.textContent = message;
+    }
+
+    function disconnected() {
+      endSession("Bluetooth disconnected. Last value is not live. Tap Connect to reconnect.");
+    }
+
+    function receive(event) {
+      try {
+        const value = event.target.value;
+        const text = new TextDecoder("utf-8", {fatal: true}).decode(value);
+        const number = Number(text);
+        if (!/^(0|[1-9][0-9]*)$/.test(text) || !Number.isSafeInteger(number)) {
+          throw new Error("Invalid counter response");
+        }
+        const now = performance.now();
+        if (previous === null || number !== previous) lastAdvance = now;
+        previous = number;
+        lastReceived = now;
+        counter.textContent = text;
+        refreshStatus();
+      } catch (error) {
+        endSession(`Last value is not live. ${error.message}. Tap Connect to retry.`);
+      }
+    }
+
+    function refreshStatus() {
+      if (!active || previous === null) return;
+      const now = performance.now();
+      const stale = now - lastAdvance >= 3000 || now - lastReceived >= 3000;
+      status.textContent = stale ? "STALE" : "CONNECTED";
+      detail.textContent = stale
+        ? "No advancing counter received for 3 seconds. Last value is not live."
+        : "Live simulated counter received over Bluetooth.";
+    }
+
+    connect.addEventListener("click", async () => {
+      const attempt = ++generation;
+      connect.disabled = true;
+      status.textContent = "CONNECTING";
+      detail.textContent = "Choose the laptop, then wait for the counter.";
+      try {
+        // Scan unfiltered because Windows may omit the service UUID in advertisements.
+        const selected = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true, optionalServices: [serviceId]
+        });
+        if (attempt !== generation) return;
+        device = selected;
+        device.addEventListener("gattserverdisconnected", disconnected);
+        const server = await device.gatt.connect();
+        if (attempt !== generation) return;
+        const service = await server.getPrimaryService(serviceId);
+        if (attempt !== generation) return;
+        characteristic = await service.getCharacteristic(characteristicId);
+        if (attempt !== generation) return;
+        characteristic.addEventListener("characteristicvaluechanged", receive);
+        await characteristic.startNotifications();
+        if (attempt !== generation) return;
+        active = true;
+        disconnect.disabled = false;
+        detail.textContent = "Subscribed. Waiting for the first value.";
+        const source = characteristic;
+        const value = await source.readValue();
+        if (attempt === generation) receive({target: {value}});
+      } catch (error) {
+        if (attempt === generation) {
+          endSession(`Connection failed: ${error.message}. Tap Connect to retry.`);
+        }
+      }
+    });
+    disconnect.addEventListener("click", () => endSession("Disconnected by you. Last value is not live."));
+    setInterval(refreshStatus, 250);
+    if (!window.isSecureContext || !navigator.bluetooth) {
+      connect.disabled = true;
+      status.textContent = "UNSUPPORTED";
+      detail.textContent = "Use an HTTPS page in Bluefy on iPhone/iPad or Chrome on Android. Safari cannot access this BLE counter.";
+    }
+  </script>
+</body>
+</html>

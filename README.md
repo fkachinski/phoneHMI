@@ -96,6 +96,58 @@ working phone connection.
 
 ## Local checks
 
+### Next experiment: BLE dashboard (not yet phone-verified)
+
+The machine target has no Wi-Fi; future HMI experiments use BLE. The Wi-Fi
+proof is retained as historical evidence, not as the intended machine transport.
+
+[BLE dashboard](ble/dashboard/index.html) is a standalone, simulated, read-only
+Web Bluetooth page for the existing C# publisher. It reads and subscribes to
+the same characteristic as nRF Connect; no write/command interface is added.
+It shows CONNECTED, STALE after three seconds without an advancing value,
+and DISCONNECTED after a link loss or invalid response. Reconnection is manual.
+It does not mirror a Qt screen or implement the RemoteXY protocol.
+
+Phone prerequisites:
+
+- iPhone/iPad: a Web Bluetooth browser such as
+  [Bluefy](https://apps.apple.com/us/app/id1492822055); Safari is unsupported.
+- Android: a browser supporting Web Bluetooth, such as Chrome.
+- The page must be delivered over HTTPS. No public page URL or hosting is
+  configured by this experiment. Do not enter the laptop's HTTP URL into Bluefy.
+  Initial page delivery requires phone network access; counter data then travels
+  locally over BLE, not Wi-Fi or the Internet. Offline startup is not implemented.
+
+Run the BLE publisher, open the HTTPS dashboard on the phone, tap
+**Connect to counter**, and choose the laptop. Confirm advancing values for
+30 seconds, disconnect/reconnect, and stop the publisher to check disconnection.
+If notifications cease without a disconnection, the page must show STALE.
+Keep the page foregrounded; background operation is not claimed.
+
+Local browser validation (2026-11-16) used a mocked BLE device to exercise
+reads, notifications, the three-second stale threshold, recovery, invalid
+responses, link loss, manual disconnection, reconnection, chooser errors, and
+unsupported-browser messaging. These checks passed; no physical phone has yet
+used this dashboard, and HTTPS delivery remains to be configured.
+
+Local UI inspection only (not a phone BLE test):
+
+```text
+python -m http.server 8001 --bind 127.0.0.1 --directory ble/dashboard
+```
+
+Open http://localhost:8001/ and stop the server with Ctrl+C afterward.
+The same laptop is not a substitute for testing a separate BLE central.
+
+RemoteXY remains a candidate, but its
+[documented library ecosystem](https://docs.remotexy.com/docs/) targets
+microcontroller/Arduino-style boards. No documented ready-to-run Windows or
+Qt/Linux BLE publisher was established in this investigation. This is not a
+claim that a port is impossible. A port, extra hardware, or native phone app
+would be a separate implementation choice. No device integration is included.
+
+### Existing simulator tests and publisher build
+
 ```text
 python -m unittest discover -s wifi -v
 dotnet build ble/Counter.csproj
