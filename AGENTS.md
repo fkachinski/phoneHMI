@@ -12,20 +12,24 @@ computers through GitHub. It deliberately contains no company source, machine
 data, or internal environment details. No previous chat or external project
 folder is needed to run it.
 
-Earlier experiments on a managed Windows laptop did not establish a physical
-phone connection. Local HTTP worked, but LAN access failed; connectable Windows
-BLE advertising also failed. The exact causes were not established. A personal
-laptop is the next test environment, not a guaranteed fix. Its OS and Bluetooth
-capabilities still need to be checked.
+The personal Windows laptop has now demonstrated Wi-Fi on iPad and BLE
+read/notify/reconnect on iPhone, including the earlier Bluefy counter page.
+The user approved the custom logo/instrument dashboard's appearance.
+Read [README.md](README.md) for evidence and pending acceptance checks and
+[DI5-MIGRATION.md](DI5-MIGRATION.md) for the current migration gates.
 
 ## Current scope
 
 - Wi-Fi proof: Python standard-library HTTP server, simulated counter, and
   Safari-compatible page. No third-party Python packages or frontend framework.
-- BLE proof: independent Windows C# GATT peripheral with one read/notify-only
-  simulated counter characteristic. The iPhone uses an existing BLE utility.
-- No writes, remote controls, real telemetry, machine connection, native phone
-  app, deployment packaging, or automatic system configuration.
+- BLE proof: independent Windows C# read/notify counter; iPhone uses nRF
+  Connect or the custom Bluefy Web Bluetooth dashboard.
+- RemoteXY: separate Windows compatibility experiment with protocol writes
+  for layout/value requests, zero input variables and no machine commands.
+- Next: qualify actual DI5 peripheral/GATT-server capabilities, then prove a
+  standalone simulated publisher before separately scoped application work.
+- No remote controls, real telemetry, machine connection, native phone app,
+  deployment packaging, or automatic system configuration.
 
 Read [README.md](README.md) for prerequisites, exact commands, UUIDs, pass
 criteria, and cleanup. The Wi-Fi proof supports Python 3.9+ on Windows, macOS,
@@ -41,42 +45,48 @@ Do not assume it works on macOS/Linux.
 - [ble/Program.cs](ble/Program.cs): read/notify counter and bounded advertising
   startup; Ctrl+C stops it.
 - [ble/Counter.csproj](ble/Counter.csproj): Windows .NET project.
+- [ble/dashboard/index.html](ble/dashboard/index.html): preferred custom UI,
+  actual locally served logo, instruments derived from the simulated counter.
+- [ble/dashboard/README.md](ble/dashboard/README.md): connection diagnostics.
+- [remotexy/](remotexy/): alternative Windows RemoteXY compatibility publisher.
+- [remotexy-tests/](remotexy-tests/): package-free protocol tests.
+- [DI5-MIGRATION.md](DI5-MIGRATION.md): work-laptop handoff and target gates.
 
-## Evidence at the initial handoff (2026-11-16)
+## Evidence at the current handoff (2026-11-16)
 
-- Six Python tests passed.
-- BLE build succeeded without warnings or errors.
-- Local browser checks observed an advancing counter, stale detection,
-  rejection of an invalid response, reconnection, and disconnection after the
-  server stopped.
-- The BLE runtime test on the original laptop reported advertising `Aborted`
-  with error `Success` and exited nonzero.
-- Neither physical iPhone pass criterion has been verified.
+- Six Python tests and 31 RemoteXY protocol checks passed; both Windows
+  publishers built without warnings/errors.
+- Wi-Fi advancing/stale/disconnected UI observed on iPad Safari.
+- iPhone nRF Connect counter reads/notifications and manual reconnect observed;
+  original Bluefy counter updates/reconnect observed.
+- RemoteXY text reconnect and subsequent gauge rendering/updates observed.
+- Final custom dashboard appearance approved on phone; mocked BLE layout,
+  freshness, recovery and reconnect checks passed locally. Final-layout
+  physical BLE acceptance and an earlier reported connection hang remain
+  unresolved by explicit observation.
+- Historical DI4 screenshots reportedly show hci0, iPhone discovery and
+  iPhone service enumeration, apparently on BlueZ 5.50. This is central/client
+  evidence only, not DI5 peripheral/server proof.
+- Android, offline startup and all actual DI5 migration gates remain pending.
 
 A passing build, adapter capability report, or local browser check is not a
-phone connectivity result. Do not describe the Wi-Fi or BLE proof as complete
-until its physical-phone acceptance test passes.
+phone connectivity result. Keep unobserved timed/freshness checks explicit.
 
 ## Next steps, in order
 
-1. Inspect this checkout and the personal laptop's OS and available runtimes.
-   Preserve existing user changes. Do not assume the previous laptop's setup.
-2. Run the existing Wi-Fi unit tests, then run the server on loopback and open
-   the page locally. Use README commands; no dependency installation is needed
-   if Python is already available.
-3. Bind to the laptop's actual Wi-Fi IPv4 address on a trusted private network.
-   Open the printed URL in iPhone Safari. Observe changing values for at least
-   30 seconds; verify stale detection and server-stop disconnection.
-4. On Windows, build and run the independent BLE publisher. Wait for successful
-   advertising, then use an iPhone BLE utility to connect, read, and subscribe.
-   Observe notifications for at least 30 seconds and verify reconnecting.
-   On another OS, report the platform limitation before proposing a different
-   publisher; do not silently replace the implementation.
-5. Record what actually happened: OS, runtime versions, date, exact commands,
-   error/status text, and observed acceptance criteria. Redact network/device
-   identifiers. Keep unverified items explicitly pending.
-6. Only after transport evidence, discuss the next increment with the user.
-   Do not automatically start machine integration or select a phone framework.
+1. Inspect the work checkout and runtimes; preserve user changes. Follow
+   [DI5-MIGRATION.md](DI5-MIGRATION.md), not the old Wi-Fi-first sequence.
+2. Inventory the actual DI5 through approved access. Confirm local GATT and
+   advertising managers, controller support, permissions and toolchain.
+   Do not infer DI5 capability from DI4 or BlueZ's version alone.
+3. Qualify a standalone simulated read/notify peripheral with the same UUIDs
+   and payload as the Windows counter. Choose Qt/backend only after inventory.
+4. Verify actual phone reads, timed notifications, repeated reconnect, stale
+   detection and publisher-stop behavior before application integration.
+5. Keep real telemetry and company source outside this repository. Later
+   integration needs a separately agreed contract and authorized work scope.
+6. Record redacted facts, commands and observed results. Stop temporary
+   services and advertising after tests; do not change managed settings.
 
 If a test fails, isolate the smallest failing layer before changing code.
 For Wi-Fi, distinguish loopback, LAN access, and phone display. For BLE,

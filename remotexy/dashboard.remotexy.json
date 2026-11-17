@@ -1,0 +1,67 @@
+{
+  "version": 11,
+  "name": "BLE Instrument Demo",
+  "scheme": {"connection":"Bluetooth","device":"ArduinoUno","module":"HC-05","ide":"Arduino"},
+  "settings": {
+    "deviceName":"","password":"",
+    "serial":{"interface":"softwareserial","serial":"Serial","rx":"2","tx":"3","speed":"9600"},
+    "wifipoint":{"ssid":"RemoteXY","open":0,"password":"12345678"},
+    "wifi":{"ssid":"YOUR_SSID","password":"YOUR_PASS"},
+    "ethernet":{"macaddress":"DE:AD:BE:EF:EF:ED","port":6377},
+    "bluetooth":{"name":"RemoteXY","mode":0},
+    "cloud":{"setmanually":1,"host":"","port":6376,"token":""}
+  },
+  "variables": [
+    {"name":"instrument_01","type":"float32","direction":"output"},
+    {"name":"instrument_02","type":"float32","direction":"output"},
+    {"name":"instrument_03","type":"float32","direction":"output"},
+    {"name":"value_01","type":"float32","direction":"output"}
+  ],
+  "displays": [{
+    "name":"mobile","type":"mobile","backgroundColor":25,
+    "formats":[{"id":"m200_x106_y200","width":106,"height":200}],
+    "pages":[{
+      "name":"page_main","start":1,
+      "controls":[
+        {
+          "name":"Label","color":165,"text":"SIMULATED / READ ONLY",
+          "font":{"bold":1,"italic":0},
+          "positions":[{"format":"m200_x106_y200","left":5,"top":7,"width":96,"height":7,"visible":1}]
+        },
+        {
+          "name":"Instrument","color":184,"showBackground":0,"backgroundColor":167,
+          "orientation":0,"angle":240,"needleColor":66,"rangeFrom":0,"rangeTo":3000,
+          "scale":3,"unit":"ENGINE RPM","linesBig":500,"linesMiddle":250,"linesSmall":0,
+          "showText":1,"textColor":31,"areasCount":2,
+          "areas":[{"from":0,"to":2400,"color":165},{"from":2400,"to":3000,"color":66},{"from":80,"to":95,"color":36},{"from":95,"to":100,"color":24}],
+          "variables":{"value":"instrument_01"},
+          "positions":[{"format":"m200_x106_y200","left":8,"top":25,"width":90,"height":90,"visible":1}]
+        },
+        {
+          "name":"Instrument","color":184,"showBackground":0,"backgroundColor":167,
+          "orientation":0,"angle":240,"needleColor":66,"rangeFrom":0,"rangeTo":120,
+          "scale":3,"unit":"TEMP C","linesBig":40,"linesMiddle":20,"linesSmall":0,
+          "showText":1,"textColor":31,"areasCount":0,
+          "areas":[{"from":0,"to":50,"color":135},{"from":50,"to":80,"color":94},{"from":80,"to":95,"color":36},{"from":95,"to":100,"color":24}],
+          "variables":{"value":"instrument_02"},
+          "positions":[{"format":"m200_x106_y200","left":4,"top":125,"width":47,"height":47,"visible":1}]
+        },
+        {
+          "name":"Instrument","color":184,"showBackground":0,"backgroundColor":167,
+          "orientation":0,"angle":240,"needleColor":66,"rangeFrom":0,"rangeTo":250,
+          "scale":3,"unit":"HYD bar","linesBig":50,"linesMiddle":25,"linesSmall":0,
+          "showText":1,"textColor":31,"areasCount":0,
+          "areas":[{"from":0,"to":50,"color":135},{"from":50,"to":80,"color":94},{"from":80,"to":95,"color":36},{"from":95,"to":100,"color":24}],
+          "variables":{"value":"instrument_03"},
+          "positions":[{"format":"m200_x106_y200","left":55,"top":125,"width":47,"height":47,"visible":1}]
+        },
+        {
+          "name":"Text","color":31,"backgroundColor":26,"center":1,
+          "background":0,"frame":0,"decimals":1,"font":{"bold":1,"italic":0},
+          "variables":{"value":"value_01"},
+          "positions":[{"format":"m200_x106_y200","left":32,"top":108,"width":42,"height":10,"visible":1}]
+        }
+      ]
+    }]
+  }]
+}
